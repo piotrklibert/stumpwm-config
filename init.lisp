@@ -25,6 +25,25 @@
       (format nil "Welcome to ~a!" (machine-instance)))
 
 
+;; (defun xrandr-output ()
+;;   (let
+;;       ((current-xrandr (run-shell-command "xrandr" t)))
+;;     (when (not (string-equal xrandr-output current-xrandr))
+;;       (run-hook heads-configuration-change-hook)
+;;       (setf xrandr-output current-xrandr))))
+
+;; (defparameter xrandr-output nil)
+;; (defparameter heads-configuration-change-hook nil)
+;; (defparameter heads-configuration-change-timer
+;;   (run-with-timer 5 5 #'xrandr-output))
+
+;; ;; for example:
+;; (add-hook heads-configuration-change-hook
+;;           (lambda () (message "Called")))
+
+;; (cancel-timer heads-configuration-change-timer)
+
+
 ;; Damn, I forgot what these (fp+ and company) do. Note to self: don't put
 ;; commenting the code off too far into the future...
 (run-shell-command "sudo mkfontscale /usr/share/fonts/bitstream-vera/" t)
@@ -69,6 +88,11 @@
 (define-key *top-map* (kbd "M-TAB")                 "next")
 (define-key *top-map* (kbd "M-ISO_Left_Tab")        "prev")
 
+(define-key *root-map* (kbd "C-Right") "move-focus right")
+(define-key *root-map* (kbd "C-Left")  "move-focus left")
+(define-key *root-map* (kbd "C-Up")    "move-focus up")
+(define-key *root-map* (kbd "C-Down")  "move-focus down")
+
 ;; Moving between groups
 (define-key *top-map* (kbd "C-M-Left")    "gprev")
 (define-key *top-map* (kbd "C-M-Right")   "gnext")
@@ -86,7 +110,8 @@
 (define-key *top-map* (kbd "M-KP_Subtract")   "shrink-frame")
 
 (define-key *top-map* (kbd "C-`")    "my-screen-shot")
-(define-key *top-map* (kbd "C-M-l")  "exec slock") ; Locks current session
+(define-key *top-map* (kbd "C-M-l")  "exec /home/cji/poligon/slock/slock") ; Locks current session
+;; (define-key *top-map* (kbd "C-M-l")  "exec slock") ; Locks current session
 (define-key *top-map* (kbd "M-F4")   "delete-window")
 (define-key *top-map* (kbd "C-M-F4") "kill-window")
 (define-key *top-map* (kbd "C-Z")    "pop-console") ; more precisely, pop urxvt
@@ -100,6 +125,12 @@
               "gnewbg EMACS"
               "gnewbg SHELL")
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; MODELINE WIDGETS DEFINITIONS
 (load "/home/cji/.stumpwm.d/my-modeline.lisp")
@@ -122,6 +153,8 @@
 
 
 ;; MISC COMMANDS
+(defcommand chrome () ()
+  (run-shell-command "google-chrome"))
 
 (defcommand my-suspend () ()
   (run-shell-command "sudo pm-suspend" t))
@@ -139,3 +172,5 @@
                 "move-focus down"
                 "resize 0 -175"
                 "exec urxvt"))
+(defcommand pop-screenshot () ()
+  (run-shell-command "pinta /home/cji/shots/0001_screen.png"))

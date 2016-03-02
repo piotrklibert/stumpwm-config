@@ -52,8 +52,9 @@
           finally (ignore-errors (mapcar #'sb-thread:destroy-thread threads)))
        (sleep *modeline-async-delay*))))
 
+(defparameter modeline-thread nil)
 (defun make-modeline-thread ()
-  (sb-thread:make-thread #'modeline-thread))
+  (setf modeline-thread (sb-thread:make-thread #'modeline-thread)))
 
 (add-hook *start-hook* #'make-modeline-thread)
 

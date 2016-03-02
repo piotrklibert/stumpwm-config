@@ -1,5 +1,6 @@
 (in-package :stumpwm-user)
 
+
 (defun rearrange-windows (win)
   "A little hack to force rearranging windows even after restoring group from a
 file. It calls `place-existing-windows` after a slight delay, when all the
@@ -11,24 +12,24 @@ windows have been displayed already."
           #'rearrange-windows)
 
 
-(define-frame-preference "CHROME"
-  (1 nil nil :class "google-chrome" :role "browser")
-  (0 nil nil :restore "ff_group" :class "google-chrome" :role "pop-up"))
+;; (define-frame-preference "CHROME"
+;;   (1 nil nil :class "google-chrome" :role "browser")
+;;   (0 nil nil :restore "ff_group" :class "google-chrome" :role "pop-up"))
 
-(define-frame-preference "EMACS"
-  (1 nil nil :restore "chrome_group" :instance "xmessage")
-  (0 nil nil :restore "ediff_group" :instance "Ediff"))
+;; (define-frame-preference "EMACS"
+;;   (1 nil nil :restore "chrome_group" :instance "xmessage")
+;;   (0 nil nil :restore "ediff_group" :instance "Ediff"))
 
-(define-frame-preference "SHELL"
-  (1 nil nil :restore "chrome_group" :instance "xmessage"))
+;; (define-frame-preference "SHELL"
+;;   (1 nil nil :restore "chrome_group" :instance "xmessage"))
 
-(define-frame-preference "prn"
-  (1 nil nil :restore "chrome_group" :instance "xmessage"))
+;; (define-frame-preference "prn"
+;;   (1 nil nil :restore "chrome_group" :instance "xmessage"))
 
-(define-frame-preference "FF"
-  (0 nil nil :restore "ff_group" :role "selenium-ide")
-  (1 nil nil :role "browser")
-  (0 nil nil :restore "ff_group" :instance "Devtools"))
+;; (define-frame-preference "FF"
+;;   (0 nil nil :restore "ff_group" :role "selenium-ide")
+;;   (1 nil nil :role "browser")
+;;   (0 nil nil :restore "ff_group" :instance "Devtools"))
 
 ;; (frame-number raise lock &key create restore dump-name class instance type role title)
 ;; (let*

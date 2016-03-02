@@ -63,10 +63,14 @@
         (y (or y 0)))
     (run-commands (format nil "resize ~a ~a" x y))))
 
-(defcommand widen-frame  () () (widen/narrow-frame :x my-step-choice))
-(defcommand narrow-frame () () (widen/narrow-frame :x (- my-step-choice)))
-(defcommand grow-frame   () () (widen/narrow-frame :y my-step-choice))
-(defcommand shrink-frame () () (widen/narrow-frame :y (- my-step-choice)))
+(defcommand widen-frame  () ()
+  (widen/narrow-frame :x (dllnode-val my-step-choice)))
+(defcommand narrow-frame () ()
+  (widen/narrow-frame :x (- (dllnode-val my-step-choice))))
+(defcommand grow-frame   () ()
+  (widen/narrow-frame :y (dllnode-val my-step-choice)))
+(defcommand shrink-frame () ()
+  (widen/narrow-frame :y (- (dllnode-val my-step-choice))))
 
 
 
