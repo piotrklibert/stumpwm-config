@@ -1,73 +1,63 @@
 (load-module "stumptray")
 (load-module "cpu")
 
-;; (message (format nil "Argh: ~s ~s" out output))
 ;; (setf *window-format* "%m%n%s")
 (setf *window-format* "%50t")
 (setf *mode-line-timeout* 0.7)
 
-;; TODO: decide whether it's needed to call run-prog directly, or if just
-;; run-shell-command is going to work
-(defun runner-thread (cmd output)
-  (let
-      ((process (run-prog *shell-program*
-                          :args (list "-c" cmd)
-                          :wait nil
-                          :output :stream)))
-    (loop
-       do (sleep 0.1)
-       while (sb-ext:process-alive-p process)
-       finally
-         (progn
-           (let ((out (sb-ext:process-output process)))
-             (setf (symbol-value output)
-                   ;; TODO: CLEAN THIS!
-                   (handler-case
-                       (format nil "~s" (read out))
-                     (error (x)
-                       (run-shell-command cmd t))))
-             (sb-ext:process-close process))))))
 
-(defun run-prog-async (cmd output)
-  (sb-thread:make-thread #'runner-thread :arguments (list cmd output)))
 
-(defvar *vol* nil)
-(defvar bklight nil)
-(defvar sig 1)
+(define-modeline-thread *vol* (concat "amixer sget Master "
+                                      "| awk '/^ +Front L/{print $5}'"))
+(define-modeline-thread *bklight* "/usr/bin/xbacklight")
+(define-modeline-thread *sig* "awk 'NR==3{print $3}' /proc/net/wireless")
+(define-modeline-thread *bat* (concat "upower -i /org/freedesktop/UPower/devices/battery_BAT0 "
+                                      "| grep perc "
+                                      "| awk '{print $2}'"))
+(defun get-volume ()
+  (string-trim (string #\newline) *vol*))
 
-(defvar *modeline-async-delay* 1.2)
+(defun get-backlight ()
+  (car (split-string *bklight* ".")))
+
+(defun get-signal-strength ()
+  (string-trim
+   (concat "." (string #\newline))
+   *sig*))
+
+
+(defvar *modeline-async-delay* 1.2
+  "How long to wait between calls to external commands")
+
 (defun some-thread-still-runs-p (threads)
   "This HAS to be possible to write much more elegantly..."
   (not (= 0 (count-if #'identity (mapcar #'sb-thread:thread-alive-p threads)))))
 
+(defun apply0 (f) (apply f '()))
 (defun modeline-thread ()
-  (loop
+  (loop                                 ; NOTE: loops forever!
      (let
-         ((threads (list (run-prog-async "amixer sget Master | awk '/^ +Front L/{print $5}'" '*vol*)
-                         (run-prog-async "/usr/bin/xbacklight" 'bklight)
-                         (run-prog-async "awk 'NR==3{print $3}' /proc/net/wireless" 'sig))))
-       (loop
+         ((threads (mapcar 'apply0 modeline-external-threads)))
+       (loop                            ; wait for all commands to finish
           do (sleep 0.1)
-          while (some-thread-still-runs-p threads)
-          finally (ignore-errors (mapcar #'sb-thread:destroy-thread threads)))
+          while (some-thread-still-runs-p threads))
+       ;; finalize the threads to make sure memory is freed
+       (destroy-threads threads)
        (sleep *modeline-async-delay*))))
 
+(defun destroy-threads (threads)
+  (ignore-errors
+    (mapcar #'sb-thread:destroy-thread threads)))
+
 (defparameter modeline-thread nil)
+
 (defun make-modeline-thread ()
   (setf modeline-thread (sb-thread:make-thread #'modeline-thread)))
 
 (add-hook *start-hook* #'make-modeline-thread)
 
-(defun get-volume ()
-  (string-trim (string #\newline) *vol*))
 
-(defun get-backlight ()
-  (car (split-string bklight ".")))
 
-(defun get-signal-strength ()
-  (string-trim
-   (concat "." (string #\newline))
-   sig))
 
 
 (defvar *current-battery-status* 100)
@@ -75,7 +65,8 @@
 (defun low-battery-alert (&optional bat_percentage)
   ;; use a global value if the caller didn't provide its own value
   ;; (for ease of testing in the REPL)
-  (when (not bat_percentage) (setf bat_percentage *current-battery-status*))
+  (when (not bat_percentage)
+    (setf bat_percentage *current-battery-status*))
   (let
       ((*message-window-gravity* :center) ; make alert appear at the at the center of screen
        (*timeout-wait* 6))              ; wait 6 sec before making alert disappear
@@ -107,16 +98,28 @@
     (setf *current-battery-status* new-battery-status)
     (format nil "~s%" new-battery-status)))
 
+(defun get-uptime ()
+  "Example uptime output:
+    20:56:14 up  2:50,  1 user,  load average: 0,28, 0,38, 0,2"
+  (let
+      ((line (string-trim '(#\newline #\space) (run-shell-command "uptime" t))))
+    (multiple-value-bind (match groups)
+        (cl-ppcre:scan-to-strings "up *([^,]*)" line)
+      (concat "[" (elt groups 0) "]"))))
 
 ;;
 ;;                              MODELINE FORMAT
 ;;
 (setf stumpwm:*screen-mode-line-format*
-      (list "^2%d^]    ^1[|>^] %g    ^1[|>^] %W "
-            " ^> "                      ; remaining elements become left-aligned
+      (list
+       "Up:"
+       '(:eval (get-uptime))
+       " ^2%d^]    ^1[|>^] %g    ^1[|>^] %W "
+       " ^> "                      ; remaining elements become left-aligned
 
-            "^2%c %t^]  "               ; CPU usage indicators (from load-module
+       "^2%c %t^]  "               ; CPU usage indicators (from load-module
                                         ; call earlier)
+
             ;; my own indicators:
             "   Vol:"   '(:eval (get-volume))
             "   Disp:[" '(:eval (get-backlight))
@@ -128,6 +131,15 @@
 
 (setf *mode-line-position* :top)
 (mode-line)
+
+;; TODO: debounce these to make them call ext. command less often. It sometimes
+;; breaks when the command is issued too often/too many times.
+(defcommand backlight-down () ()
+  (run-shell-command "xbacklight -time 0.1 -dec 10" t))
+
+(defcommand backlight-up () ()
+  (run-shell-command "xbacklight -time 0.1 -inc 10" t))
+
 
 
 (defun run-prog (prog &rest opts &key args output (wait t) &allow-other-keys)
