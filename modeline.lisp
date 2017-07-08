@@ -43,7 +43,7 @@
 (defun modeline-thread ()
   (loop                                 ; NOTE: loops forever!
      (let
-         ((threads (mapcar 'apply0 modeline-external-threads)))
+         ((threads (mapcar 'apply0 *modeline-external-threads*)))
        (loop                            ; wait for all commands to finish
           do (sleep 0.1)
           while (some-thread-still-runs-p threads))

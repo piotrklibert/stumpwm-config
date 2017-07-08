@@ -140,9 +140,9 @@ Example:
     (loop
        do (sleep 0.1)
        while (sb-ext:process-alive-p process)
-       for out = (sb-ext:process-output process)
        finally
-         (progn
+         (let
+             ((out (sb-ext:process-output process)))
            (setf (symbol-value output) (handler-case
                                            (progn
                                              (my-log1 "here")
