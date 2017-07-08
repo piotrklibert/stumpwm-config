@@ -1,6 +1,24 @@
 (in-package :stumpwm-user)
 
-;; very simple Doubly Linked List (abbreviated DLL)
+(defparameter *ignored-windows-list* '("Skype" "CopyQ"))
+
+(defun should-stay-hidden-p ()
+  (loop
+     for w in *ignored-windows-list*
+     if (search w (window-title (current-window)))
+     return t))
+
+
+(defcommand my-next () ()
+  (next)
+  (when (should-stay-hidden-p)
+    (my-next)))
+
+
+(defcommand my-prev () ()
+  (prev))
+
+;; ;; very simple Doubly Linked List (abbreviated DLL)
 (defstruct DLLNode
   prev next val)
 
@@ -19,9 +37,9 @@
 
 
 (defparameter my-steps
-  (-> (mapcar (op make-dllnode :val _)
-              '(50 120 200 300 500))
-      (init-steps))
+  (init-steps (mapcar (lambda (x)  (make-dllnode :val x))
+                      '(50 120 200 300 500)))
+
   "Circular, doubly linked list of possible step sizes. It looks like this when
   initialized:
     (#1=#S(DLLNODE

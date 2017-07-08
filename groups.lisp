@@ -1,5 +1,10 @@
 (in-package :stumpwm-user)
 
+(defcommand move-group-backward-cmd () ()
+  (move-group-backward))
+
+(defcommand move-group-forward-cmd () ()
+  (move-group-forward))
 
 (defun random-name (length)
   (with-output-to-string (stream)
