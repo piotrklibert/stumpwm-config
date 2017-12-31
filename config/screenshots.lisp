@@ -1,3 +1,7 @@
+(defpackage :my-screenshots
+  (:use :cl :stumpwm :alexandria :cl-arrows :my-utils)
+  (:export make-screen-shot
+           pop-last-screen-shot))
 (in-package :my-screenshots)
 
 (defparameter *my-img-count* 0)
@@ -12,8 +16,10 @@
   (setf *my-img-count* (1+ *my-img-count*))
   (let
       ((target-filename (my-get-fname *my-img-count*)))
-    (shell$ "scrot '~a' -e 'mv $f ~~/shots/'" target-filename)
+    (my-threading:shell$ (format nil "scrot '~a' -e 'mv $f ~~/shots/'" target-filename))
     (message (format nil "~a" target-filename))))
+
+
 
 (defcommand pop-last-screen-shot () ()
   (let*

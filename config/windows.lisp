@@ -1,4 +1,20 @@
-(in-package :stumpwm-user)
+(defpackage :my-windows
+  (:use :cl :stumpwm :alexandria :cl-arrows :my-utils)
+  (:export narrow-frame
+           my-remove
+           my-next
+           shrink-frame
+           make-screen-shot
+           increase-step-size
+           my-vsplit
+           my-prev
+           pop-last-screen-shot
+           my-hsplit
+           decrease-step-size
+           widen-frame
+           grow-frame))
+(in-package :my-windows)
+
 
 (defparameter *ignored-windows-list* '("Skype" "CopyQ"))
 
@@ -105,7 +121,8 @@
   "Kill the window and close the frame it occupied."
   (handler-case
       (run-commands "delete" "remove")
-    (error (x) nil)))
+    (error (x)
+      (my-log1 x))))
 
 (defun my-close-and-kill () ()
   (kill-window)
